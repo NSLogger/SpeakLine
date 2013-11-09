@@ -26,6 +26,7 @@
         
         [_speechSynth setDelegate:self];
         
+        _voices = [NSSpeechSynthesizer availableVoices];
     }
     return self;
 }
@@ -35,6 +36,7 @@
     
     [_stopButton setEnabled:NO];
     [_startButton setEnabled:YES];
+    [_tableView setEnabled:YES];
 }
 
 - (IBAction)sayIt:(id)sender {
@@ -50,6 +52,7 @@
     
     [_stopButton setEnabled:YES];
     [_startButton setEnabled:NO];
+    [_tableView setEnabled:NO];
     
 }
 
@@ -57,5 +60,44 @@
     NSLog(@"Stopping");
     
     [_speechSynth stopSpeaking];
+}
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tv
+{
+    return (NSInteger)[_voices count];
+}
+
+- (id)tableView:(NSTableView *)tv
+        objectValueForTableColumn:(NSTableColumn *)tableColumn
+                                row:(NSInteger)row
+{
+    NSString *v = [_voices objectAtIndex:row];
+    NSDictionary *dict = [NSSpeechSynthesizer attributesForVoice:v];
+    
+    return [dict objectForKey:NSVoiceName];
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification
+{
+    NSInteger row = [_tableView selectedRow];
+    
+    if (row == -1) {
+        return;
+    }
+    
+    NSString *selectedVoice = [_voices objectAtIndex:row];
+    
+    [_speechSynth setVoice:selectedVoice];
+    NSLog(@"new voice = %@", selectedVoice);
+}
+
+- (void)awakeFromNib
+{
+    NSString *defaultVoice = [NSSpeechSynthesizer defaultVoice];
+    NSInteger defaultRow = [_voices indexOfObject:defaultVoice];
+    NSIndexSet *indices = [NSIndexSet indexSetWithIndex:defaultRow];
+    [_tableView selectRowIndexes:indices byExtendingSelection:NO];
+    [_tableView scrollRowToVisible:defaultRow];
+    
 }
 @end
